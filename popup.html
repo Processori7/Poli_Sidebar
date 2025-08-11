@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Polination AI Chat</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body data-theme="dark">
+    <div class="header">
+        <h2>Polination AI Chat</h2>
+        <div class="controls">
+            <select id="theme-select">
+                <option value="dark">Темная тема</option>
+                <option value="light">Светлая тема</option>
+                <option value="blue">Синяя тема</option>
+                <option value="green">Зеленая тема</option>
+            </select>
+            <button id="settings-button" class="icon-button" title="Настройки">⚙️</button>
+        </div>
+    </div>
+
+    <div class="settings-panel" id="settings-panel" style="display: none;">
+        <div class="setting-group">
+            <label for="temperature-slider">Температура (креативность): <span id="temperature-value">0.7</span></label>
+            <input type="range" id="temperature-slider" min="0" max="3" step="0.1" value="0.7">
+        </div>
+        <div class="setting-group">
+            <label for="private-checkbox">
+                <input type="checkbox" id="private-checkbox" checked>
+                Приватный режим (не показывать в публичной ленте)
+            </label>
+        </div>
+        <button id="close-settings" class="btn btn-secondary">Закрыть</button>
+    </div>
+    
+    <div class="model-section">
+        <label for="model-select">Модель AI:</label>
+        <select id="model-select">
+            <option value="">Загрузка моделей...</option>
+        </select>
+        <div class="model-info" id="model-info"></div>
+    </div>
+
+    <div id="chat-container" class="chat-container"></div>
+
+    <div class="input-section">
+        <div class="file-upload-section">
+            <input type="file" id="file-input" accept=".txt,.md,.json,.js,.py,.html,.css,.pdf,image/*,audio/*" multiple style="display: none;">
+            <button id="file-button" class="btn btn-file" title="Загрузить файлы или изображения">📎</button>
+            <div id="file-preview" class="file-preview"></div>
+        </div>
+        
+        <div class="message-input-container">
+            <textarea id="message-input" placeholder="Введите ваш вопрос..." rows="3"></textarea>
+            <button id="send-button" class="btn btn-primary">Отправить</button>
+        </div>
+
+        <div class="action-buttons">
+            <button id="clear-button" class="btn btn-secondary">Очистить чат</button>
+            <button id="save-button" class="btn btn-secondary">Сохранить чат</button>
+            <button id="copy-last-button" class="btn btn-secondary">Копировать последний ответ</button>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <span id="status-text">Готов к работе</span>
+        <span id="model-indicator"></span>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

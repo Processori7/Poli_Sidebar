@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Polination AI Chat",
+  "version": "1.0",
+  "description": "AI чат с Polination API",
+  "author": "Processor",
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "side_panel": {
+    "default_path": "popup.html"
+  },
+    "icons": {
+    "32": "icon.png"
+ },
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "storage",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ]
+}
