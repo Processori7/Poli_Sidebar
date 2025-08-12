@@ -81,6 +81,7 @@ body {
 
 /* Header */
 .header {
+    position: relative;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -92,12 +93,41 @@ body {
 .header h2 {
     color: var(--accent-color);
     font-size: 1.2em;
+    margin-right: 50px; /* Make space for settings button */
 }
 
 .controls {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex: 1;
+    justify-content: flex-start;
+}
+
+/* Fixed settings button */
+.settings-button-fixed {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 1.4em;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    color: var(--text-primary);
+    z-index: 100;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.settings-button-fixed:hover {
+    background-color: var(--bg-tertiary);
+    transform: rotate(90deg);
 }
 
 .icon-button {
@@ -410,6 +440,68 @@ select:focus {
     to { transform: rotate(360deg); }
 }
 
+/* Error Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: var(--bg-primary);
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    width: 80%;
+    max-width: 400px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.modal-icon {
+    font-size: 2em;
+    margin-right: 10px;
+    color: var(--error-color);
+}
+
+.modal-title {
+    color: var(--text-primary);
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.modal-message {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.modal-buttons .btn {
+    min-width: 80px;
+}
+
+/* Language selector styling */
+#language-select {
+    margin-right: 10px;
+}
+
 /* Responsive design */
 @media (max-width: 400px) {
     .action-buttons {
@@ -422,5 +514,24 @@ select:focus {
     
     .header h2 {
         font-size: 1em;
+    }
+    
+    .modal-content {
+        width: 90%;
+        margin: 10% auto;
+    }
+    
+    .modal-buttons {
+        flex-direction: column;
+    }
+    
+    .controls {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    #language-select,
+    #theme-select {
+        margin-bottom: 5px;
     }
 }

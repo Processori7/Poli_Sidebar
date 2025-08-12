@@ -4,39 +4,44 @@
     <meta charset="UTF-8">
     <title>Polination AI Chat</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="translations.js"></script>
 </head>
 <body data-theme="dark">
     <div class="header">
         <h2>Polination AI Chat</h2>
+        <button id="settings-button" class="settings-button-fixed" title="Settings">⚙️</button>
         <div class="controls">
-            <select id="theme-select">
-                <option value="dark">Темная тема</option>
-                <option value="light">Светлая тема</option>
-                <option value="blue">Синяя тема</option>
-                <option value="green">Зеленая тема</option>
+            <select id="language-select">
+                <option value="en">English</option>
+                <option value="ru">Русский</option>
             </select>
-            <button id="settings-button" class="icon-button" title="Настройки">⚙️</button>
+            <select id="theme-select">
+                <option value="dark" data-translate="darkTheme">Dark Theme</option>
+                <option value="light" data-translate="lightTheme">Light Theme</option>
+                <option value="blue" data-translate="blueTheme">Blue Theme</option>
+                <option value="green" data-translate="greenTheme">Green Theme</option>
+            </select>
         </div>
     </div>
 
     <div class="settings-panel" id="settings-panel" style="display: none;">
         <div class="setting-group">
-            <label for="temperature-slider">Температура (креативность): <span id="temperature-value">0.7</span></label>
+            <label for="temperature-slider" data-translate="temperature">Temperature (creativity): <span id="temperature-value">0.7</span></label>
             <input type="range" id="temperature-slider" min="0" max="3" step="0.1" value="0.7">
         </div>
         <div class="setting-group">
             <label for="private-checkbox">
                 <input type="checkbox" id="private-checkbox" checked>
-                Приватный режим (не показывать в публичной ленте)
+                <span data-translate="privateMode">Private mode (don't show in public feed)</span>
             </label>
         </div>
-        <button id="close-settings" class="btn btn-secondary">Закрыть</button>
+        <button id="close-settings" class="btn btn-secondary" data-translate="closeSettings">Close</button>
     </div>
     
     <div class="model-section">
-        <label for="model-select">Модель AI:</label>
+        <label for="model-select" data-translate="modelLabel">AI Model:</label>
         <select id="model-select">
-            <option value="">Загрузка моделей...</option>
+            <option value="" data-translate="loadingModels">Loading models...</option>
         </select>
         <div class="model-info" id="model-info"></div>
     </div>
@@ -51,20 +56,37 @@
         </div>
         
         <div class="message-input-container">
-            <textarea id="message-input" placeholder="Введите ваш вопрос..." rows="3"></textarea>
-            <button id="send-button" class="btn btn-primary">Отправить</button>
+            <textarea id="message-input" data-translate="messagePlaceholder" placeholder="Enter your question..." rows="3"></textarea>
+            <button id="send-button" class="btn btn-primary" data-translate="sendButton">Send</button>
         </div>
 
         <div class="action-buttons">
-            <button id="clear-button" class="btn btn-secondary">Очистить чат</button>
-            <button id="save-button" class="btn btn-secondary">Сохранить чат</button>
-            <button id="copy-last-button" class="btn btn-secondary">Копировать последний ответ</button>
+            <button id="clear-button" class="btn btn-secondary" data-translate="clearChat">Clear chat</button>
+            <button id="save-button" class="btn btn-secondary" data-translate="saveChat">Save chat</button>
+            <button id="copy-last-button" class="btn btn-secondary" data-translate="copyLastResponse">Copy last response</button>
         </div>
     </div>
 
     <div class="status-bar">
-        <span id="status-text">Готов к работе</span>
+        <span id="status-text">Ready to work</span>
         <span id="model-indicator"></span>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="error-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-icon">⚠️</span>
+                <span class="modal-title" id="modal-title">Models Loading Timeout</span>
+            </div>
+            <div class="modal-message" id="modal-message">
+                Failed to load AI models within 20 seconds. This might be due to network issues or server problems.
+            </div>
+            <div class="modal-buttons">
+                <button id="modal-retry" class="btn btn-primary">Retry</button>
+                <button id="modal-cancel" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
     </div>
 
     <script src="popup.js"></script>

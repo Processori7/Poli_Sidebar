@@ -2,9 +2,11 @@
 let availableModels = [];
 let currentFiles = [];
 let conversationHistory = [];
+let modelLoadTimeout;
 
 // DOM elements
 const elements = {
+    languageSelect: null,
     themeSelect: null,
     settingsButton: null,
     settingsPanel: null,
@@ -24,20 +26,33 @@ const elements = {
     fileInput: null,
     filePreview: null,
     statusText: null,
-    modelIndicator: null
+    modelIndicator: null,
+    errorModal: null,
+    modalTitle: null,
+    modalMessage: null,
+    modalRetry: null,
+    modalCancel: null
 };
 
 // Initialize extension when DOM is loaded
 document.addEventListener('DOMContentLoaded', async function() {
+    initializeLanguage();
     initializeElements();
     await initializeSettings();
     await loadModels();
     setupEventListeners();
-    showStatus('Готов к работе');
+    showStatus(t('ready'));
 });
+
+// Initialize language from localStorage
+function initializeLanguage() {
+    const storedLang = getStoredLanguage();
+    currentLanguage = storedLang;
+}
 
 // Initialize DOM elements
 function initializeElements() {
+    elements.languageSelect = document.getElementById('language-select');
     elements.themeSelect = document.getElementById('theme-select');
     elements.settingsButton = document.getElementById('settings-button');
     elements.settingsPanel = document.getElementById('settings-panel');
@@ -58,6 +73,17 @@ function initializeElements() {
     elements.filePreview = document.getElementById('file-preview');
     elements.statusText = document.getElementById('status-text');
     elements.modelIndicator = document.getElementById('model-indicator');
+    elements.errorModal = document.getElementById('error-modal');
+    elements.modalTitle = document.getElementById('modal-title');
+    elements.modalMessage = document.getElementById('modal-message');
+    elements.modalRetry = document.getElementById('modal-retry');
+    elements.modalCancel = document.getElementById('modal-cancel');
+    
+    // Set language selector to current language and update page text
+    if (elements.languageSelect) {
+        elements.languageSelect.value = currentLanguage;
+        updatePageText();
+    }
 }
 
 // Initialize settings from storage
@@ -86,55 +112,102 @@ async function initializeSettings() {
     }
 }
 
-// Load available models from Polination API
+// Load available models from Polination API with 20-second timeout
 async function loadModels() {
     try {
-        showStatus('Загрузка моделей...');
+        showStatus(t('loadingModelsStatus'));
         
-        const response = await fetch('https://text.pollinations.ai/models');
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        // Set up 20-second timeout
+        const timeoutPromise = new Promise((_, reject) => {
+            modelLoadTimeout = setTimeout(() => {
+                reject(new Error('Timeout: Models loading took too long'));
+            }, 20000); // 20 seconds
+        });
+        
+        const fetchPromise = fetch('https://text.pollinations.ai/models').then(async response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        });
+        
+        // Race between fetch and timeout
+        availableModels = await Promise.race([fetchPromise, timeoutPromise]);
+        
+        // Clear timeout if successful
+        if (modelLoadTimeout) {
+            clearTimeout(modelLoadTimeout);
+            modelLoadTimeout = null;
         }
         
-        availableModels = await response.json();
         populateModelSelect();
+        showStatus(t('modelsLoaded'));
         
-        showStatus('Модели загружены');
     } catch (error) {
         console.error('Error loading models:', error);
-        showStatus('Ошибка загрузки моделей', true);
         
-        // Fallback models
-        availableModels = [
-            { name: 'openai', description: 'OpenAI GPT (Default)', vision: true, tools: true },
-            { name: 'claude-hybridspace', description: 'Claude (Vision)', vision: true },
-            { name: 'openai-large', description: 'OpenAI Large (Vision)', vision: true }
-        ];
-        populateModelSelect();
+        // Clear timeout if it exists
+        if (modelLoadTimeout) {
+            clearTimeout(modelLoadTimeout);
+            modelLoadTimeout = null;
+        }
+        
+        if (error.message.includes('Timeout')) {
+            // Show timeout error modal
+            showTimeoutModal();
+        } else {
+            showStatus(t('errorLoadingModels'), true);
+            // Use fallback models
+            loadFallbackModels();
+        }
     }
+}
+
+// Show timeout error modal
+function showTimeoutModal() {
+    elements.modalTitle.textContent = t('modelsTimeout');
+    elements.modalMessage.textContent = t('modelsTimeoutMessage');
+    elements.modalRetry.textContent = t('retryButton');
+    elements.modalCancel.textContent = t('cancelButton');
+    elements.errorModal.style.display = 'block';
+}
+
+// Hide error modal
+function hideModal() {
+    elements.errorModal.style.display = 'none';
+}
+
+// Load fallback models
+function loadFallbackModels() {
+    availableModels = [
+        { name: 'openai', description: 'OpenAI GPT (Default)', vision: true, tools: true },
+        { name: 'claude-hybridspace', description: 'Claude (Vision)', vision: true },
+        { name: 'openai-large', description: 'OpenAI Large (Vision)', vision: true }
+    ];
+    populateModelSelect();
 }
 
 // Populate model select dropdown
 function populateModelSelect() {
     elements.modelSelect.innerHTML = '';
     
-    // Group models by category
+    // Group models by category (translated)
     const categories = {
-        'Рекомендуемые': [],
-        'Текст и Изображения': [],
-        'Только текст': [],
-        'Аудио': []
+        [t('recommended')]: [],
+        [t('textAndImages')]: [],
+        [t('textOnly')]: [],
+        [t('audio')]: []
     };
     
     availableModels.forEach(model => {
         if (['openai', 'claude-hybridspace', 'openai-large'].includes(model.name)) {
-            categories['Рекомендуемые'].push(model);
+            categories[t('recommended')].push(model);
         } else if (model.vision) {
-            categories['Текст и Изображения'].push(model);
+            categories[t('textAndImages')].push(model);
         } else if (model.audio) {
-            categories['Аудио'].push(model);
+            categories[t('audio')].push(model);
         } else {
-            categories['Только текст'].push(model);
+            categories[t('textOnly')].push(model);
         }
     });
     
@@ -170,10 +243,10 @@ function updateModelInfo() {
     const selectedModel = availableModels.find(m => m.name === elements.modelSelect.value);
     if (selectedModel) {
         const features = [];
-        if (selectedModel.vision) features.push('👁️ Изображения');
-        if (selectedModel.audio) features.push('🎤 Аудио');
-        if (selectedModel.tools) features.push('🛠️ Функции');
-        if (selectedModel.reasoning) features.push('🧠 Рассуждения');
+        if (selectedModel.vision) features.push('👁️ ' + t('images'));
+        if (selectedModel.audio) features.push('🎤 ' + t('audioFeature'));
+        if (selectedModel.tools) features.push('🛠️ ' + t('functions'));
+        if (selectedModel.reasoning) features.push('🧠 ' + t('reasoning'));
         
         const tierInfo = selectedModel.tier ? ` (${selectedModel.tier})` : '';
         elements.modelInfo.textContent = `${features.join(' • ')}${tierInfo}`;
@@ -183,6 +256,14 @@ function updateModelInfo() {
 
 // Setup event listeners
 function setupEventListeners() {
+    // Language selection
+    elements.languageSelect.addEventListener('change', function() {
+        const lang = this.value;
+        setLanguage(lang);
+        populateModelSelect(); // Refresh model categories with new language
+        updateModelInfo(); // Update model info with new language
+    });
+    
     // Theme selection
     elements.themeSelect.addEventListener('change', function() {
         const theme = this.value;
@@ -204,6 +285,11 @@ function setupEventListeners() {
     elements.temperatureSlider.addEventListener('input', function() {
         elements.temperatureValue.textContent = this.value;
         chrome.storage.local.set({ temperature: parseFloat(this.value) });
+        // Update temperature label with new value
+        const tempLabel = document.querySelector('[data-translate="temperature"]');
+        if (tempLabel) {
+            tempLabel.textContent = `${t('temperature')}: ${this.value}`;
+        }
     });
     
     // Private mode checkbox
@@ -238,6 +324,27 @@ function setupEventListeners() {
     elements.clearButton.addEventListener('click', clearChat);
     elements.saveButton.addEventListener('click', saveChat);
     elements.copyLastButton.addEventListener('click', copyLastResponse);
+    
+    // Modal event listeners
+    elements.modalRetry.addEventListener('click', async function() {
+        hideModal();
+        await loadModels();
+    });
+    
+    elements.modalCancel.addEventListener('click', function() {
+        hideModal();
+        loadFallbackModels();
+        showStatus(t('errorLoadingModels'), true);
+    });
+    
+    // Close modal when clicking outside
+    elements.errorModal.addEventListener('click', function(event) {
+        if (event.target === elements.errorModal) {
+            hideModal();
+            loadFallbackModels();
+            showStatus(t('errorLoadingModels'), true);
+        }
+    });
 }
 
 // Handle file selection
@@ -246,12 +353,12 @@ function handleFileSelect(event) {
     
     files.forEach(file => {
         if (currentFiles.length >= 10) {
-            showStatus('Максимум 10 файлов за раз', true);
+            showStatus(t('maxFiles'), true);
             return;
         }
         
         if (file.size > 10 * 1024 * 1024) { // 10MB limit
-            showStatus(`Файл ${file.name} слишком большой (максимум 10MB)`, true);
+            showStatus(t('fileTooLarge', { filename: file.name }), true);
             return;
         }
         
@@ -302,13 +409,13 @@ async function sendMessage() {
     const message = elements.messageInput.value.trim();
     
     if (!message && currentFiles.length === 0) {
-        showStatus('Введите сообщение или выберите файлы', true);
+        showStatus(t('enterMessage'), true);
         return;
     }
     
     const selectedModel = elements.modelSelect.value;
     if (!selectedModel) {
-        showStatus('Выберите модель AI', true);
+        showStatus(t('selectModel'), true);
         return;
     }
     
@@ -330,15 +437,15 @@ async function sendMessage() {
         currentFiles = [];
         updateFilePreview();
         
-        showStatus('Отправка запроса...');
+        showStatus(t('sendingRequest'));
         
         // Send to Polination API
         await sendToPolination(messages, selectedModel);
         
     } catch (error) {
         console.error('Error sending message:', error);
-        addMessage('Произошла ошибка при отправке сообщения: ' + error.message, 'error');
-        showStatus('Ошибка отправки', true);
+        addMessage(t('errorSendingMessage') + error.message, 'error');
+        showStatus(t('sendError'), true);
     } finally {
         // Re-enable controls
         elements.sendButton.disabled = false;
@@ -359,11 +466,9 @@ async function prepareMessages(userMessage) {
             try {
                 if (file.type.startsWith('text/') || file.name.endsWith('.json') || file.name.endsWith('.md') || file.name.endsWith('.js') || file.name.endsWith('.py')) {
                     const text = await fileToText(file);
-                    content += `\n\nСодержимое файла ${file.name}:\n\n${text}`;
+                    content += `\n\n${t('fileContent', { filename: file.name })}\n\n${text}`;
                 } else if (file.type.startsWith('image/')) {
-                    content += `\n\n[Изображение: ${file.name}]`;
-                    // For vision models, we'll need to handle images differently
-                    // This is a simplified approach for now
+                    content += `\n\n[${t('imageFile', { filename: file.name })}]`;
                 }
             } catch (error) {
                 console.error('Error processing file:', file.name, error);
@@ -413,7 +518,7 @@ async function sendToPolination(messages, model) {
     const messageElement = addMessage('', 'bot');
     messageElement.classList.add('streaming');
     
-    showStatus('Получение ответа...');
+    showStatus(t('receivingResponse'));
     
     try {
         while (true) {
@@ -465,7 +570,7 @@ async function sendToPolination(messages, model) {
     // Remove streaming indicator
     messageElement.classList.remove('streaming');
     
-    showStatus('Ответ получен');
+    showStatus(t('responseReceived'));
 }
 
 // Add message to chat
@@ -522,10 +627,10 @@ function updateMessageContent(messageElement, content) {
 
 // Clear chat
 function clearChat() {
-    if (confirm('Очистить всю историю чата?')) {
+    if (confirm(t('confirmClearChat'))) {
         elements.chatContainer.innerHTML = '';
         conversationHistory = [];
-        showStatus('Чат очищен');
+        showStatus(t('chatCleared'));
     }
 }
 
@@ -535,13 +640,13 @@ function saveChat() {
     let chatText = `Polination AI Chat - ${new Date().toLocaleString()}\n\n`;
     
     messages.forEach(message => {
-        const type = message.classList.contains('user-message') ? 'Пользователь' : 'AI';
+        const type = message.classList.contains('user-message') ? t('user') : t('ai');
         const content = message.textContent || '';
         chatText += `${type}: ${content}\n\n`;
     });
     
     downloadTextFile(chatText, `polination-chat-${Date.now()}.txt`);
-    showStatus('Чат сохранен');
+    showStatus(t('chatSaved'));
 }
 
 // Copy last AI response
@@ -552,13 +657,13 @@ function copyLastResponse() {
         const text = lastMessage.textContent || '';
         
         navigator.clipboard.writeText(text).then(() => {
-            showStatus('Ответ скопирован в буфер обмена');
+            showStatus(t('responseCopied'));
         }).catch(error => {
             console.error('Copy failed:', error);
-            showStatus('Ошибка копирования', true);
+            showStatus(t('copyError'), true);
         });
     } else {
-        showStatus('Нет ответов для копирования', true);
+        showStatus(t('noResponsesToCopy'), true);
     }
 }
 
@@ -604,7 +709,7 @@ function showStatus(message, isError = false) {
     
     if (isError) {
         setTimeout(() => {
-            elements.statusText.textContent = 'Готов к работе';
+            elements.statusText.textContent = t('ready');
             elements.statusText.style.color = 'var(--text-secondary)';
         }, 3000);
     }
