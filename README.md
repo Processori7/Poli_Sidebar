@@ -154,3 +154,164 @@ MIT License - свободно используйте и модифицируй�
 ---
 
 **Polination AI Chat Extension** - ваш персональный AI-ассистент в браузере!
+
+---
+
+# English Version
+
+# Polination AI Chat - Chrome Extension
+
+A Chrome extension that provides access to various AI models through Polination API directly from the browser's side panel.
+
+## Features
+
+### 🤖 Multiple AI Models
+- Dynamic loading of available models from Polination API
+- Support for text, multimodal, and audio models
+
+### 🎨 Customizable Themes
+- Dark theme (default)
+- Light theme
+- Blue theme
+- Green theme
+- Settings saved in local storage
+
+### 📁 File Upload
+- Support for images (JPG, PNG, GIF, WebP)
+- Text files (TXT, MD, JSON, JS, Python, HTML, CSS)
+- PDF files
+- Audio files
+- Limitation: up to 10 files, maximum 10MB each
+
+### ⚙️ Advanced Settings
+- Temperature adjustment (response creativity)
+- Private mode (don't show in public feed)
+- Real-time streaming responses
+
+### 💬 Chat Functions
+- Conversation history
+- Save chat to file
+- Copy last response
+- Clear chat history
+- Shift+Enter support for new line
+
+## Installation
+
+1. Download or clone this repository
+2. Open Chrome and go to `chrome://extensions/`
+3. Enable "Developer mode"
+4. Click "Load unpacked extension"
+5. Select the `Poli_Sidebar` folder
+6. Extension is ready to use!
+
+## Usage
+
+### First Launch
+1. Click the extension icon in the toolbar
+2. Or use the Side Panel in Chrome
+3. Wait for available models to load
+4. Select the desired AI model
+5. Start chatting!
+
+### Model Selection
+- **Recommended**: Best models for general use
+- **Text and Images**: Models with image analysis support
+- **Text Only**: Fast text-only models
+- **Audio**: Models for audio processing
+
+### File Upload
+1. Click the 📎 (paperclip) button
+2. Select files to upload
+3. Review selected files
+4. Send message with files
+
+### Theme Change
+1. Select theme from dropdown in the top section
+2. Settings will be saved automatically
+
+### Additional Settings
+1. Click ⚙️ to open settings panel
+2. Adjust temperature to control creativity
+3. Enable/disable private mode
+
+## API and Technical Details
+
+### Polination API
+The extension uses Polination API to access various AI models:
+- **Endpoint**: `https://text.pollinations.ai/openai`
+- **Models list**: `https://text.pollinations.ai/models`
+- **Format**: OpenAI-compatible API
+
+### Supported File Formats
+- **Images**: JPG, PNG, GIF, WebP, BMP
+- **Text**: TXT, MD, JSON, JS, PY, HTML, CSS
+- **Documents**: PDF
+- **Audio**: MP3, WAV, M4A
+
+### Data Storage
+- Settings saved in `chrome.storage.local`
+- Chat history stored only during session
+- Files processed locally and not saved
+
+## File Structure
+
+```
+Poli_Sidebar/
+├── manifest.json       # Extension manifest
+├── popup.html          # Main interface
+├── styles.css          # Styles and themes
+├── popup.js            # Main logic
+├── service-worker.js   # Background script
+└── README.md           # Documentation
+```
+
+## Development and Customization
+
+### Adding New Themes
+1. Open `styles.css`
+2. Add new `[data-theme="name"]` block
+3. Define CSS color variables
+4. Add option to `popup.html`
+
+### Interface Modification
+- `popup.html` - interface structure
+- `styles.css` - appearance and themes
+- `popup.js` - functionality
+
+### Adding New Features
+Main functions are in `popup.js`:
+- `sendMessage()` - sending messages
+- `loadModels()` - loading models
+- `handleFileSelect()` - file handling
+
+## Troubleshooting
+
+### Models Don't Load
+- Check internet connection
+- Open Developer Tools (F12) to view errors
+- API might be temporarily unavailable
+
+### Files Don't Upload
+- Check file size (maximum 10MB)
+- Ensure file format is supported
+- Check number of files (maximum 10)
+
+### Extension Doesn't Work
+- Make sure extension is enabled in `chrome://extensions/`
+- Reload the extension
+- Check permissions in manifest
+
+## License
+
+MIT License - freely use and modify for personal and commercial purposes.
+
+## Support
+
+If you have questions or issues:
+1. Check this documentation
+2. Look at the developer console in browser
+3. Create an issue with problem description
+
+---
+
+**Polination AI Chat Extension** - your personal AI assistant in the browser!

@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     initializeLanguage();
     initializeElements();
     await initializeSettings();
+    await loadChatHistory();
     await loadModels();
     setupEventListeners();
     showStatus(t('ready'));
@@ -109,6 +110,63 @@ async function initializeSettings() {
         window.selectedModel = stored.selectedModel;
     } catch (error) {
         console.error('Error loading settings:', error);
+    }
+}
+
+// Load chat history from storage
+async function loadChatHistory() {
+    try {
+        const result = await chrome.storage.local.get(['conversationHistory', 'chatMessages']);
+        
+        if (result.conversationHistory) {
+            conversationHistory = result.conversationHistory;
+        }
+        
+        if (result.chatMessages) {
+            // Restore visual chat messages
+            result.chatMessages.forEach(msgData => {
+                const messageElement = document.createElement('div');
+                messageElement.className = `message ${msgData.type}-message`;
+                messageElement.innerHTML = msgData.html;
+                elements.chatContainer.appendChild(messageElement);
+            });
+            
+            // Scroll to bottom
+            elements.chatContainer.scrollTop = elements.chatContainer.scrollHeight;
+        }
+    } catch (error) {
+        console.error('Error loading chat history:', error);
+    }
+}
+
+// Save chat history to storage
+async function saveChatHistory() {
+    try {
+        // Save conversation history for API
+        const historyToSave = conversationHistory.slice(); // Copy array
+        
+        // Save visual messages for UI restoration
+        const chatMessages = Array.from(elements.chatContainer.querySelectorAll('.message')).map(msg => ({
+            type: msg.classList.contains('user-message') ? 'user' : 
+                  msg.classList.contains('bot-message') ? 'bot' : 'error',
+            html: msg.innerHTML
+        }));
+        
+        await chrome.storage.local.set({
+            conversationHistory: historyToSave,
+            chatMessages: chatMessages
+        });
+    } catch (error) {
+        console.error('Error saving chat history:', error);
+    }
+}
+
+// Clear chat history from storage
+async function clearChatHistory() {
+    try {
+        await chrome.storage.local.remove(['conversationHistory', 'chatMessages']);
+    } catch (error) {
+        console.error('Error clearing chat history:', error);
     }
 }
 
@@ -570,6 +628,9 @@ async function sendToPolination(messages, model) {
     // Remove streaming indicator
     messageElement.classList.remove('streaming');
     
+    // Save chat history after receiving response
+    await saveChatHistory();
+    
     showStatus(t('responseReceived'));
 }
 
@@ -626,10 +687,11 @@ function updateMessageContent(messageElement, content) {
 }
 
 // Clear chat
-function clearChat() {
+async function clearChat() {
     if (confirm(t('confirmClearChat'))) {
         elements.chatContainer.innerHTML = '';
         conversationHistory = [];
+        await clearChatHistory(); // Clear from storage
         showStatus(t('chatCleared'));
     }
 }
