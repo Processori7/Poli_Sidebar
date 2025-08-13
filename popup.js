@@ -133,7 +133,7 @@ async function loadChatHistory() {
             result.chatMessages.forEach(msgData => {
                 const messageElement = document.createElement('div');
                 messageElement.className = `message ${msgData.type}-message`;
-                messageElement.innerHTML = msgData.html;
+                messageElement.textContent = msgData.text || '';
                 elements.chatContainer.appendChild(messageElement);
             });
             
@@ -160,7 +160,7 @@ async function saveChatHistory() {
         const chatMessages = Array.from(elements.chatContainer.querySelectorAll('.message')).map(msg => ({
             type: msg.classList.contains('user-message') ? 'user' : 
                   msg.classList.contains('bot-message') ? 'bot' : 'error',
-            html: msg.innerHTML
+            text: msg.textContent || ''
         }));
         
         await chrome.storage.local.set({
@@ -258,7 +258,10 @@ function loadFallbackModels() {
 
 // Populate model select dropdown
 function populateModelSelect() {
-    elements.modelSelect.innerHTML = '';
+    // Clear all options safely
+    while (elements.modelSelect.firstChild) {
+        elements.modelSelect.removeChild(elements.modelSelect.firstChild);
+    }
     
     // Group models by category (translated)
     const categories = {
@@ -445,7 +448,10 @@ function handleFileSelect(event) {
 
 // Update file preview
 function updateFilePreview() {
-    elements.filePreview.innerHTML = '';
+    // Clear all file preview items safely
+    while (elements.filePreview.firstChild) {
+        elements.filePreview.removeChild(elements.filePreview.firstChild);
+    }
     
     currentFiles.forEach((file, index) => {
         const item = document.createElement('div');
@@ -454,10 +460,18 @@ function updateFilePreview() {
         const icon = getFileIcon(file.type);
         const name = file.name.length > 20 ? file.name.substring(0, 20) + '...' : file.name;
         
-        item.innerHTML = `
-            <span>${icon} ${name}</span>
-            <button class="remove-file" onclick="removeFile(${index})">×</button>
-        `;
+        // Create span element safely
+        const span = document.createElement('span');
+        span.textContent = `${icon} ${name}`;
+        
+        // Create remove button safely
+        const removeButton = document.createElement('button');
+        removeButton.className = 'remove-file';
+        removeButton.textContent = '×';
+        removeButton.addEventListener('click', () => removeFile(index));
+        
+        item.appendChild(span);
+        item.appendChild(removeButton);
         
         elements.filePreview.appendChild(item);
     });
@@ -669,7 +683,7 @@ function addMessage(content, type, files = []) {
                 img.alt = file.name;
                 attachment.appendChild(img);
             } else {
-                attachment.innerHTML = `${getFileIcon(file.type)} ${file.name}`;
+                attachment.textContent = `${getFileIcon(file.type)} ${file.name}`;
             }
             
             attachmentsDiv.appendChild(attachment);
@@ -705,7 +719,10 @@ function updateMessageContent(messageElement, content) {
 // Clear chat
 async function clearChat() {
     if (confirm(t('confirmClearChat'))) {
-        elements.chatContainer.innerHTML = '';
+        // Clear chat container safely
+        while (elements.chatContainer.firstChild) {
+            elements.chatContainer.removeChild(elements.chatContainer.firstChild);
+        }
         conversationHistory = [];
         await clearChatHistory(); // Clear from storage
         showStatus(t('chatCleared'));
