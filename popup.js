@@ -14,6 +14,7 @@ const elements = {
     temperatureSlider: null,
     temperatureValue: null,
     privateCheckbox: null,
+    noHistoryCheckbox: null,
     modelSelect: null,
     modelInfo: null,
     chatContainer: null,
@@ -61,6 +62,7 @@ function initializeElements() {
     elements.temperatureSlider = document.getElementById('temperature-slider');
     elements.temperatureValue = document.getElementById('temperature-value');
     elements.privateCheckbox = document.getElementById('private-checkbox');
+    elements.noHistoryCheckbox = document.getElementById('no-history-checkbox');
     elements.modelSelect = document.getElementById('model-select');
     elements.modelInfo = document.getElementById('model-info');
     elements.chatContainer = document.getElementById('chat-container');
@@ -90,7 +92,7 @@ function initializeElements() {
 // Initialize settings from storage
 async function initializeSettings() {
     try {
-        const stored = await chrome.storage.local.get(['theme', 'temperature', 'private', 'selectedModel']);
+        const stored = await chrome.storage.local.get(['theme', 'temperature', 'private', 'noHistory', 'selectedModel']);
         
         // Apply theme
         const theme = stored.theme || 'dark';
@@ -105,6 +107,10 @@ async function initializeSettings() {
         // Apply private mode
         const isPrivate = stored.private !== undefined ? stored.private : true;
         elements.privateCheckbox.checked = isPrivate;
+        
+        // Apply no history mode (default false)
+        const noHistory = stored.noHistory !== undefined ? stored.noHistory : false;
+        elements.noHistoryCheckbox.checked = noHistory;
         
         // Store selected model for later
         window.selectedModel = stored.selectedModel;
@@ -142,6 +148,11 @@ async function loadChatHistory() {
 // Save chat history to storage
 async function saveChatHistory() {
     try {
+        // Check if history saving is disabled
+        if (elements.noHistoryCheckbox.checked) {
+            return; // Don't save history if disabled
+        }
+        
         // Save conversation history for API
         const historyToSave = conversationHistory.slice(); // Copy array
         
@@ -353,6 +364,11 @@ function setupEventListeners() {
     // Private mode checkbox
     elements.privateCheckbox.addEventListener('change', function() {
         chrome.storage.local.set({ private: this.checked });
+    });
+    
+    // No history mode checkbox
+    elements.noHistoryCheckbox.addEventListener('change', function() {
+        chrome.storage.local.set({ noHistory: this.checked });
     });
     
     // Model selection

@@ -14,6 +14,7 @@ const translations = {
         settings: "Settings",
         temperature: "Temperature (creativity)",
         privateMode: "Private mode (don't show in public feed)",
+        noHistoryMode: "Don't save history",
         closeSettings: "Close",
         language: "Language",
         
@@ -92,6 +93,7 @@ const translations = {
         settings: "Настройки",
         temperature: "Температура (креативность)",
         privateMode: "Приватный режим (не показывать в публичной ленте)",
+        noHistoryMode: "Не сохранять историю",
         closeSettings: "Закрыть",
         language: "Язык",
         
